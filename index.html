@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Урожай картофеля — Беларусь, 2025. Аналитический кейс</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#EFE8D8;
+    --surface:#FBF7EE;
+    --ink:#2A2018;
+    --ink-soft:#5B4E3D;
+    --leaf:#5F7A45;
+    --leaf-deep:#43592F;
+    --clay:#A85A2E;
+    --clay-soft:#D9B98C;
+    --line: rgba(42,32,24,0.14);
+    --line-strong: rgba(42,32,24,0.28);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:840px;margin:0 auto;padding:0 24px 96px;}
+  h1,h2,h3{font-family:'Fraunces', Georgia, serif;font-weight:600;color:var(--ink);margin:0;}
+
+  /* Hero */
+  header.hero{
+    padding:64px 0 40px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:48px;
+  }
+  .kicker{
+    font-size:14px;
+    color:var(--clay);
+    font-weight:500;
+    margin-bottom:14px;
+  }
+  h1{font-size:40px;line-height:1.12;letter-spacing:-0.01em;max-width:11.5em;}
+  .hero-sub{
+    margin-top:16px;
+    max-width:34em;
+    font-size:17px;
+    color:var(--ink-soft);
+  }
+  .hero-meta{
+    margin-top:28px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 22px;
+    font-size:13.5px;
+    color:var(--ink-soft);
+  }
+  .hero-meta span{white-space:nowrap;}
+  .hero-meta b{color:var(--ink);font-weight:600;}
+
+  /* KPI row */
+  .kpis{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    margin-top:36px;
+  }
+  .kpi{
+    background:var(--surface);
+    padding:22px 18px;
+  }
+  .kpi .num{
+    font-family:'Fraunces', serif;
+    font-size:28px;
+    font-weight:600;
+    color:var(--leaf-deep);
+    line-height:1.1;
+  }
+  .kpi .lbl{
+    margin-top:8px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    line-height:1.4;
+  }
+  .kpi .delta{
+    display:inline-block;
+    margin-top:6px;
+    font-size:12px;
+    color:var(--clay);
+    font-weight:500;
+  }
+
+  /* Sections */
+  section{margin-top:64px;}
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    gap:16px;
+    border-top:1px solid var(--line-strong);
+    padding-top:14px;
+    margin-bottom:24px;
+  }
+  .section-head .tag{
+    font-size:12.5px;
+    color:var(--clay);
+    font-weight:500;
+    white-space:nowrap;
+  }
+  .section-head h2{font-size:23px;}
+  p{margin:14px 0;font-size:15.5px;}
+  .lede{font-size:16.5px;color:var(--ink-soft);max-width:38em;}
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    padding:24px 24px 8px;
+    margin:22px 0;
+  }
+  .card .chart-note{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-top:14px;
+    padding-top:12px;
+    border-top:1px solid var(--line);
+  }
+  canvas{max-width:100%;}
+
+  .insight{
+    border-left:3px solid var(--leaf);
+    padding:2px 0 2px 18px;
+    margin:22px 0;
+    font-size:15px;
+    color:var(--ink);
+  }
+  .insight b{color:var(--leaf-deep);}
+  .insight.warn{border-left-color:var(--clay);}
+  .insight.warn b{color:var(--clay);}
+
+  table{width:100%;border-collapse:collapse;font-size:14.5px;margin:18px 0;}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);}
+  th{color:var(--ink-soft);font-weight:500;font-size:12.5px;}
+  td.num, th.num{text-align:right;font-variant-numeric:tabular-nums;}
+
+  ul.findings{list-style:none;margin:20px 0;padding:0;}
+  ul.findings li{
+    padding:14px 0 14px 30px;
+    border-top:1px solid var(--line);
+    position:relative;
+    font-size:15px;
+  }
+  ul.findings li:before{
+    content:"";
+    position:absolute;left:0;top:20px;
+    width:7px;height:7px;border-radius:50%;
+    background:var(--leaf);
+  }
+
+  .steps{counter-reset:step;margin:22px 0;}
+  .steps li{
+    counter-increment:step;
+    list-style:none;
+    padding-left:38px;
+    position:relative;
+    margin:16px 0;
+    font-size:15px;
+  }
+  .steps li:before{
+    content:counter(step);
+    position:absolute;left:0;top:-1px;
+    width:24px;height:24px;
+    border:1px solid var(--line-strong);
+    border-radius:50%;
+    font-size:12px;
+    font-weight:600;
+    color:var(--ink-soft);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'IBM Plex Sans';
+  }
+
+  .sources{margin:18px 0 0;padding:0;list-style:none;}
+  .sources li{
+    padding:11px 0;
+    border-top:1px solid var(--line);
+    font-size:14px;
+    display:flex;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .sources a{color:var(--leaf-deep);text-decoration:none;border-bottom:1px solid var(--clay-soft);}
+  .sources a:hover{border-bottom-color:var(--clay);}
+  .sources .date{color:var(--ink-soft);white-space:nowrap;font-size:13px;}
+
+  footer{
+    margin-top:72px;
+    padding-top:20px;
+    border-top:1px solid var(--line-strong);
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+
+  @media (max-width:620px){
+    h1{font-size:30px;}
+    .kpis{grid-template-columns:repeat(2,1fr);}
+    .wrap{padding:0 18px 72px;}
+    header.hero{padding:44px 0 32px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="kicker">Аналитический кейс · растениеводство Беларуси</div>
+    <h1>Урожай картофеля в Беларуси, сезон 2025</h1>
+    <p class="hero-sub">Разбор официальной статистики и оперативных сводок за 2025 год: как менялся сбор картофеля по ходу уборки, почему итоговая цифра Белстата в разы превышает данные Минсельхозпрода в моменте, и что это говорит о структуре производства.</p>
+    <div class="hero-meta">
+      <span>Период анализа: <b>август 2025 — январь 2026</b></span>
+      <span>Источники: <b>7 открытых публикаций</b></span>
+      <span>Метод: <b>кабинетное исследование + сведение разнородных данных</b></span>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi">
+        <div class="num">3,0 млн т</div>
+        <div class="lbl">Валовой сбор картофеля за 2025 год, все категории хозяйств</div>
+      </div>
+      <div class="kpi">
+        <div class="num">340 ц/га</div>
+        <div class="lbl">Урожайность на 19 сентября (оперативные данные)</div>
+        <div class="delta">+30,4 ц/га к 2024</div>
+      </div>
+      <div class="kpi">
+        <div class="num">675 тыс. т</div>
+        <div class="lbl">Сбор в сельхозорганизациях по итогам уборки</div>
+        <div class="delta">+125 тыс. т к 2024</div>
+      </div>
+      <div class="kpi">
+        <div class="num">21,8 тыс. га</div>
+        <div class="lbl">Площадь посадки, по оперативным сводкам на октябрь</div>
+      </div>
+    </div>
+  </header>
+
+  <section id="overview">
+    <div class="section-head"><span class="tag">01 · Контекст</span><h2>Зачем этот кейс</h2></div>
+    <p class="lede">Картофель — одна из знаковых культур белорусского АПК: страна входит в число мировых лидеров по объёму производства на душу населения. Задача кейса — собрать разрозненные публикации Белстата, Минсельхозпрода и СМИ за сезон 2025 года в единую картину, проверить цифры на непротиворечивость и вытащить из них содержательные выводы, а не просто пересказать сводки.</p>
+    <p>Готового датасета или API по этой теме нет — данные приходится собирать вручную из пресс-релизов, публикуемых в течение сезона, и итоговой статистики, которая выходит с задержкой в несколько месяцев. Это типичная ситуация для аналитика, работающего с открытыми источниками: нужно не только визуализировать цифры, но и понимать, что именно каждая цифра измеряет.</p>
+  </section>
+
+  <section id="timeline">
+    <div class="section-head"><span class="tag">02 · Динамика</span><h2>Ход уборочной кампании</h2></div>
+    <p>Минсельхозпрод публикует оперативные сводки по ходу уборки — они отражают только организованный сектор (сельхозорганизации и фермерские хозяйства), которые убирают технику по графику и отчитываются ежедневно.</p>
+    <div class="card">
+      <canvas id="chartTimeline" height="190"></canvas>
+      <div class="chart-note">Оперативные данные Минсельхозпрода, нарастающим итогом за сезон 2025 года. Финальная цифра Белстата (3 млн т) показана отдельно на графике 03 — она относится к другому охвату хозяйств.</div>
+    </div>
+    <div class="insight">
+      <b>Наблюдение.</b> С 27 августа по 24 октября организованный сектор нарастил сбор с 33 до 668 тыс. тонн — рост более чем в 20 раз за два месяца, что ожидаемо для пикового периода уборки. Урожайность при этом стабильно опережала уровень 2024 года.
+    </div>
+    <div class="insight warn">
+      <b>Осторожно с ранними цифрами.</b> На 27 августа превышение урожайности к прошлому году составляло +89,1 ц/га, а уже на 19 сентября — только +30,4 ц/га. Разница не в реальном замедлении урожая, а в том, что в конце августа убрано лишь ~33 тыс. т с небольшой, нерепрезентативной площади. Ранние сезонные сводки — плохая база для годовых выводов.
+    </div>
+  </section>
+
+  <section id="structure">
+    <div class="section-head"><span class="tag">03 · Охват данных</span><h2>Почему итог в 4,5 раза больше сводок Минсельхозпрода</h2></div>
+    <p>Итоговые 3 млн тонн (Белстат, все категории хозяйств) включают не только сельхозорганизации и фермерские хозяйства, но и приусадебные участки населения — а именно они исторически дают основной объём картофеля в Беларуси. Оперативный мониторинг Минсельхозпрода их не учитывает, поэтому сезонные сводки и годовой итог нельзя сравнивать напрямую.</p>
+    <div class="card">
+      <canvas id="chartScope" height="150"></canvas>
+      <div class="chart-note">Сопоставление объёма, отражённого в оперативном мониторинге организованного сектора, и итогового валового сбора по стране за 2025 год.</div>
+    </div>
+    <div class="insight">
+      <b>Вывод.</b> Разница между 675 тыс. т и 3 млн т — это примерно 2,3 млн т, произведённых вне организованного сектора, преимущественно хозяйствами населения. По заявлениям Минсельхозпрода, более 60% "второго хлеба" в стране выращивают именно крестьянско-фермерские хозяйства и частный сектор, а не крупные агрокомплексы — это структурная особенность отрасли, а не случайность одного сезона.
+    </div>
+  </section>
+
+  <section id="regions">
+    <div class="section-head"><span class="tag">04 · Регионы</span><h2>Где сосредоточен организованный сбор</h2></div>
+    <p>Данные по итоговому сбору в сельхозорганизациях (675 тыс. т) раскрыты по областям не полностью — в открытых публикациях названы четыре региона-лидера, доля остальных двух получена расчётным путём как остаток.</p>
+    <div class="card">
+      <canvas id="chartRegions" height="200"></canvas>
+      <div class="chart-note">Сбор картофеля в сельхозорганизациях по областям, тыс. тонн, итог сезона 2025. Столбец «Остальные области» — расчётный остаток (Гродненская и Витебская области, суммарно).</div>
+    </div>
+    <div class="insight">
+      <b>Наблюдение.</b> Минская область — безусловный лидер (187 тыс. т, ~28% организованного сбора), что ожидаемо: это крупнейший и наиболее интенсивный сельскохозяйственный регион страны. Совокупно Минская и Могилевская области дают почти половину сбора организованного сектора.
+    </div>
+  </section>
+
+  <section id="cross-crop">
+    <div class="section-head"><span class="tag">05 · Сравнение</span><h2>Картофель на фоне других культур урожая-2025</h2></div>
+    <p>Чтобы оценить место картофеля в структуре растениеводства, полезно сопоставить его с итогами по другим ключевым культурам за тот же год.</p>
+    <table>
+      <thead><tr><th>Культура</th><th class="num">Валовой сбор</th><th class="num">Урожайность</th></tr></thead>
+      <tbody>
+        <tr><td>Зерновые и зернобобовые</td><td class="num">9,1 млн т</td><td class="num">38,2 ц/га</td></tr>
+        <tr><td>Сахарная свёкла</td><td class="num">5,9 млн т</td><td class="num">538 ц/га</td></tr>
+        <tr><td>Овощи</td><td class="num">2,7 млн т</td><td class="num">289 ц/га</td></tr>
+        <tr><td><b>Картофель</b></td><td class="num"><b>3,0 млн т</b></td><td class="num">н/д по стране целиком*</td></tr>
+        <tr><td>Рапс</td><td class="num">910,3 тыс. т</td><td class="num">20,9 ц/га</td></tr>
+        <tr><td>Льноволокно</td><td class="num">58,3 тыс. т</td><td class="num">&gt;12 ц/га</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:13px;color:var(--ink-soft);margin-top:-6px;">*Единая цифра средней урожайности картофеля по всем категориям хозяйств за 2025 год в изученных источниках не публиковалась — см. раздел «Ограничения данных».</p>
+  </section>
+
+  <section id="findings">
+    <div class="section-head"><span class="tag">06 · Итоги</span><h2>Ключевые выводы</h2></div>
+    <ul class="findings">
+      <li><b>Рост к 2024 году подтверждён на всех этапах уборки</b> — и по объёму, и по урожайности, что видно как из оперативных сводок, так и из итоговой статистики Белстата.</li>
+      <li><b>Плановая площадь посадки была увеличена заранее</b>: власти закладывали рост с 16,8 до 19,7 тыс. га ещё до начала сезона на фоне жалоб на качество и цены картофеля в магазинах в начале 2025 года; по факту площадь оказалась ещё выше — 21,8 тыс. га (в охвате оперативного мониторинга).</li>
+      <li><b>Основной объём производства формируют не агрокомплексы, а мелкие и частные хозяйства</b> — сельхозорганизации дают лишь около пятой части итогового сбора страны.</li>
+      <li><b>Минская область — главный организованный производитель</b>, за ней следуют Могилёвская и Брестская области.</li>
+      <li><b>Раннесезонные показатели ненадёжны для прогноза годового результата</b> — разброс между сводками на 27 августа и 19 сентября 2025 года показывает, как сильно меняется картина по мере роста охвата уборки.</li>
+    </ul>
+  </section>
+
+  <section id="limits">
+    <div class="section-head"><span class="tag">07 · Методология</span><h2>Как собирался кейс и его ограничения</h2></div>
+    <ol class="steps">
+      <li>Собраны публикации Белстата, Минсельхозпрода и профильных СМИ за сезон 2025 года — от первых сводок уборки (август) до итогового годового отчёта (январь 2026).</li>
+      <li>Цифры сгруппированы по датам публикации, чтобы восстановить хронологию, а не только конечный результат.</li>
+      <li>Каждая цифра проверена на охват: к какой категории хозяйств она относится (сельхозорганизации / все категории), чтобы не сравнивать несопоставимые величины напрямую.</li>
+      <li>Пробелы в данных (например, урожайность по стране целиком за год, разбивка по всем шести областям) зафиксированы явно, а не восполнены догадками.</li>
+    </ol>
+    <div class="insight warn">
+      <b>Что осталось не закрыто.</b> В открытых источниках не нашлось: (1) единой итоговой урожайности картофеля по всем категориям хозяйств за 2025 год — только оперативные срезы по организованному сектору; (2) полной разбивки сбора по всем шести областям; (3) официальной трёхсторонней структуры производства (сельхозорганизации / фермерские хозяйства / хозяйства населения) — публичные заявления упоминают только укрупнённое деление. Для полноценного дашборда эти пробелы стоит закрывать через прямой запрос данных Белстата, а не через СМИ.
+    </div>
+  </section>
+
+  <section id="sources">
+    <div class="section-head"><span class="tag">08 · Источники</span><h2>Использованные публикации</h2></div>
+    <ul class="sources">
+      <li><a href="https://sputnik.by/20260119/belstat-podvel-itogi-uborochnoy-kampanii-2025-goda-1103582974.html" target="_blank" rel="noopener">Sputnik Беларусь — «Белстат подвёл итоги уборочной кампании 2025 года»</a><span class="date">19.01.2026</span></li>
+      <li><a href="https://myfin.by/article/rynki/stalo-izvestno-skolko-v-belarusi-sobrali-zerna-kartofela-i-ovosej-za-2025-god-43039" target="_blank" rel="noopener">MyFin.by — итоги сбора зерна, картофеля и овощей за 2025 год</a><span class="date">19.01.2026</span></li>
+      <li><a href="https://myfin.by/article/rynki/v-belarusi-zaversilas-uborka-kartofela-kakim-byl-urozaj-41599" target="_blank" rel="noopener">MyFin.by — итоги уборки картофеля в сельхозорганизациях, по областям</a><span class="date">2025</span></li>
+      <li><a href="https://sputnik.by/20250827/srednyaya-urozhaynost-kartofelya-v-belarusi-bolshe-proshlogodney-1099260956.html" target="_blank" rel="noopener">Sputnik Беларусь — оперативная сводка на 27 августа</a><span class="date">27.08.2025</span></li>
+      <li><a href="https://xn--e1alid.xn--p1ai/journal/publication/urozhaiynost-kartofelya-v-belorussii-vyrosla-na-30-centnerov-s-gektara-v-2025-godu" target="_blank" rel="noopener">Урожайность картофеля в Белоруссии — сводка на 19 сентября</a><span class="date">19.09.2025</span></li>
+      <li><a href="https://sputnik.by/20251006/minselkhozprod-urozhaynost-kartofelya-v-belarusi-vyshe-proshlogodney-1100532014.html" target="_blank" rel="noopener">Sputnik Беларусь — оперативная сводка на 6 октября</a><span class="date">06.10.2025</span></li>
+      <li><a href="https://www.rodniva.by/2025/10/uborochnaja-kampanija-2025-urozhajnost-zerna-i-svekly-vyrosla.html" target="_blank" rel="noopener">«Родная нива» — оперативная сводка на 24 октября</a><span class="date">24.10.2025</span></li>
+      <li><a href="https://news.zerkalo.io/economics/99827.html" target="_blank" rel="noopener">Zerkalo.io — решение об увеличении посевных площадей под урожай 2025</a><span class="date">2025</span></li>
+    </ul>
+  </section>
+
+  <footer>
+    Учебный аналитический кейс на основе открытых данных Белстата, Минсельхозпрода Республики Беларусь и СМИ. Подготовлен как портфолио-проект по анализу данных: сбор из разнородных источников, сведение показателей с разным охватом, визуализация и критическая оценка ограничений данных.
+  </footer>
+
+</div>
+
+<script>
+const inkSoft = '#5B4E3D';
+const gridColor = 'rgba(42,32,24,0.10)';
+Chart.defaults.font.family = "'IBM Plex Sans', sans-serif";
+Chart.defaults.color = inkSoft;
+Chart.defaults.font.size = 12.5;
+
+// 02 Timeline chart
+new Chart(document.getElementById('chartTimeline'), {
+  type: 'line',
+  data: {
+    labels: ['27 авг', '19 сен', '6 окт', '24 окт'],
+    datasets: [{
+      label: 'Собрано нарастающим итогом, тыс. т',
+      data: [33, 225, 500, 668],
+      borderColor: '#5F7A45',
+      backgroundColor: 'rgba(95,122,69,0.14)',
+      fill: true,
+      tension: 0.35,
+      pointBackgroundColor: '#43592F',
+      pointRadius: 5,
+      borderWidth: 2.5
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, title: { display: true, text: 'тыс. тонн' }, grid: { color: gridColor } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// 03 Scope comparison
+new Chart(document.getElementById('chartScope'), {
+  type: 'bar',
+  data: {
+    labels: ['Организованный сектор\n(оперативный мониторинг)', 'Все категории хозяйств\n(итог года, Белстат)'],
+    datasets: [{
+      data: [675, 3000],
+      backgroundColor: ['#D9B98C', '#A85A2E'],
+      borderRadius: 3,
+      barThickness: 46
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { beginAtZero: true, title: { display: true, text: 'тыс. тонн' }, grid: { color: gridColor } },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// 04 Regions
+new Chart(document.getElementById('chartRegions'), {
+  type: 'bar',
+  data: {
+    labels: ['Минская', 'Могилёвская', 'Брестская', 'Гомельская', 'Остальные области*'],
+    datasets: [{
+      data: [187, 139, 132, 86, 131],
+      backgroundColor: '#5F7A45',
+      borderRadius: 3
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, title: { display: true, text: 'тыс. тонн' }, grid: { color: gridColor } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+</script>
+
+</body>
+</html>
